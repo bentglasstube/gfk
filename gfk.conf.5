@@ -1,0 +1,39 @@
+.TH GFK.CONF 5 gfk
+.SH NAME
+gfk.conf \- gfk configuration file
+.SH SYNOPSIS
+/etc/gfk.conf
+.SH DESCRIPTION
+Configuration options for gfk are stores in gfk.conf.  This file is sourced by
+the script.  The syntax is simply that of setting bash variables.  The following
+variables are used:
+.SH OPTIONS
+.TP
+.BI TEMP
+Temporary location when generating shares.  This should be a ram disk for best
+security.
+.TP
+.BI USB
+Directory for file shares stored on the USB key.  This should usually be on a
+removable media such as a USB drive.
+.TP
+.BI LOCAL
+Directory for file shares stored locally and symlinks to files stored on the USB
+key.  This should not be readable by other users as it will contain sufficient
+data to reconstruct your files when the USB symlinks are active.
+.TP
+.BI MOUNT
+Directory for mounting secretfs.  This is where your reconstructed files will
+appear when the USB symlinks are active.  As such, it should not be readable by
+other users although the default for secretfs is to give the files 0400
+permissions so it may not be an issue.
+.TP
+.BI STORE
+Directory for storing unused shares.  This is the weakest point of the system as
+it can potentially store enough data to reconstruct the files without any other
+point of access.  As such, it is recommended to use something secure to store
+these and that the shares are distributed quickly to your other computers.
+.SH SEE ALSO
+.IR gfk (1),
+.IR gfshare (7)
+

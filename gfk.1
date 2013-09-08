@@ -1,0 +1,66 @@
+.TH GFK 1 gfk
+.SH NAME
+gfk - Galios Field Key Manager
+.SH SYNOPSIS
+.B gfk
+.RB add
+.IR file
+.sp
+.B gfk
+.RB grab
+.IR file
+.sp
+.B gfk
+.RB rm
+.IR file
+.sp
+.B gfk
+.RB ls
+.sp
+.B gfk
+.RB eject
+.sp
+.B gfk
+.RB setup
+.SH DESCRIPTION
+.B gfk
+is a key management system based on libgfshare and secretfs.  The main purpose
+is to store parts of your private SSH and GPG keys on a removable media to give
+them two-factor authentication.  Due to the way that libgfshare works, the
+files stored on the USB key are insufficient to reconstruct the real files.
+The same goes for the files stored on the computer.
+.SH COMMANDS
+.TP
+.BI add
+Add the file to the USB drive.  This will split the file with gfsplit and move
+two of the shares to the USB drive.  It will move one share to your local
+computer and the rest to the configured storage area.  It will then verify that
+the file was correctly split and replace the file with a symlink to the copy of
+the file in secretfs.  If the USB drive files are inaccessible, the secretfs
+copy will disappear, rendering the file useless.
+.TP
+.BI grab
+Grabs a share from the storage area and copes it to your local filesystem.
+This is how you add a file to a second client after using add on the first.
+.TP
+.BI rm
+Removes a file from the USB drive and places it back in your local filesystem
+as a real file.  This is the inverse of add.  If you do this, the file will not
+be present on any other clients.
+.TP
+.BI ls
+List the files available on the USB drive.
+.TP
+.BI eject
+Attempts to unmount the USB drive using udevil, sudo umount, and umount.
+It is strongly recommended that you do this before physically removing the
+drive from your computer.
+.TP
+.BI setup
+Mounts the secretfs according to the configuration.  This should be run from
+.bash_profile or something similar to ensure the files are available when you
+attach the USB storage.
+.SH SEE ALSO
+.IR gfk.conf (5),
+.IR gfshare (7)
+
