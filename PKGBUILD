@@ -1,9 +1,9 @@
 # Maintainer: Alan Berndt <alan@eatabrick.org>
 pkgname=gfk
 pkgver=0.0.2
-pkgrel=1
+pkgrel=2
 pkgdesc="Securely share files between computers with a USB drive"
-url="http://gfx.eatabrick.org/"
+url="http://gfk.eatabrick.org/"
 license='MIT'
 arch=('any')
 depends=('secretfs')
