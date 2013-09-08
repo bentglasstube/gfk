@@ -1,2 +1,2 @@
-language: c # no option for bash :)
+language: c # no option for bash
 script: bash -n gfk
