@@ -1,0 +1,5 @@
+src/gfk
+src/gfk-*
+pkg
+gfk-*.pkg.tar.xz
+*.tar.gz
