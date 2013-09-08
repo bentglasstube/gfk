@@ -9,9 +9,9 @@ method gives you a way to securely store them on a USB drive in such a way that
 losing the USB drive does not compromise or lose your keys.  Really this can be
 used for any number of files, but the idea is to secure private keys.
 
-This security is achieved using Daniel Silverstone's incredible [libgfshare] and
-[secretfs].  You can read the details of those projects there.  All this script
-does it make it easier to deal with them.
+This security is achieved using Daniel Silverstone's incredible [libgfshare][]
+and [secretfs][].  You can read the details of those projects there.  All this
+script does it make it easier to deal with them.
 
 ## Setup
 
@@ -32,8 +32,8 @@ included them in this repository to make your life easier.
 
 Once you get that all set, I strongly suggest you find a way to automatically
 and consistently mount the partition to a known spot.  I gave the partition a
-label and [udevil] liked that just fine.  If you want to do it manually that's
-fine too but you will want to mount it to the same path always.
+label and [udevil][] liked that just fine.  If you want to do it manually
+that's fine too but you will want to mount it to the same path always.
 
 After you have all that working, just run a `make install` (probably as root)
 and the script will be installed.  You will probably want to edit the
@@ -69,7 +69,7 @@ the USB key is mounted correctly.  It should probably be in your home directory.
 ### STORE
 
 Where to store the unused shares.  My best suggestion at this time is to use
-Dropbox or [sshfs] or something else that you can share between all your
+Dropbox or [sshfs][] or something else that you can share between all your
 clients.  Keep in mind that you will need to be able to access this to add new
 clients since that's where the unclaimed shares are kept.
 
@@ -169,3 +169,8 @@ I also put a fun image on the FAT partition in case someone finds the drive:
 
 In the future I want to devise a better storage system, perhaps encrypting the
 unused shares on the USB drive.
+
+[libgfshare]: http://www.digital-scurf.org/software/libgfshare
+[secretfs]: http://www.digital-scurf.org/software/secretfs
+[udevil]: http://ignorantguru.github.io/udevil/
+[sshfs]: https://wiki.archlinux.org/index.php/Sshfs
