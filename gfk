@@ -1,0 +1,256 @@
+#!/bin/bash
+
+# Configuration options
+source /etc/gfk.conf
+
+N=3 # TODO make configurable
+M=6 # TODO ask each time
+
+function usage {
+  c=$(basename $0)
+
+  echo 'Usage'
+  echo "  $c add <file>   - Add a file to the USB key"
+  echo "  $c grab <file>  - Grab a file from the USB key to use on this computer"
+  echo "  $c rm <file>    - Remove a file from the USB key"
+  echo "  $c ls           - List all the files on the USB key"
+  echo "  $c eject        - Unmount the USB key"
+  echo "  $c setup        - Help with setting up $c"
+
+  exit 0
+}
+
+function mkcleandir {
+  path=$1
+  basename=$2
+
+  mkdir -p $path
+  rm -f $path/$basename.???
+}
+
+function mvsingle {
+  src=$1
+  dest=$2
+  basename=$3
+
+  mv $(find $src -maxdepth 1 -name "$basename.???" -print -quit) $dest
+}
+
+function exists {
+  path=$1
+  basename=$2
+
+  test -n "$(find $path -maxdepth 1 -name "$basename.???" -print -quit)"
+}
+
+function make_symlinks {
+  basename=$1
+
+  for f in $USB/$basename.???; do
+    ln -s $f $LOCAL/$(basename $f)
+  done
+}
+
+function error {
+  echo "$@" >&2
+  exit 1
+}
+
+function check_things {
+  if [ ! -d $USB ]; then
+    error "USB key not found ($USB)"
+  fi
+
+  if is_secretfs $MOUNT; then
+    true # everything ok
+  else
+    error "secretfs not mounted ($MOUNT)"
+  fi
+}
+
+function is_secretfs {
+  path=$1
+
+  fs=$(df -P $path | awk 'NR==2 { print $1 }')
+  test $fs = secretfs
+}
+
+function setup {
+  if is_secretfs $MOUNT; then
+    true # already mounted
+  else
+    mkdir -p $LOCAL $MOUNT
+    secretfs $LOCAL $MOUNT
+  fi
+}
+
+function split_file {
+  file=$1
+  basename=$(basename $file)
+
+  check_things
+
+  # check that $basename does not exist on the key
+  if exists $USB $basename; then
+    echo "$basename is already present on the key."
+    echo 'Splitting the file again will *INVALIDATE* all existing client shares.'
+    read -p 'Are you sure you want to do this? ' -n 1 -r
+    echo
+
+    if [[ ! $REPLY =~ ^[Yy] ]]; then
+      echo "Okay, bailing out"
+      exit 0
+    fi
+  fi
+
+  # Make shares in $TEMP
+  mkcleandir $TEMP $basename
+  gfsplit -n $N -m $M $file $TEMP/$basename
+
+  # Move two shares to $USB
+  mkcleandir $USB $basename
+  mvsingle $TEMP $USB $basename
+  mvsingle $TEMP $USB $basename
+
+  # Move one share to $LOCAL
+  mkcleandir $LOCAL $basename
+  mvsingle $TEMP $LOCAL $basename
+
+  # Make symlinks to USB shares
+  make_symlinks $basename
+
+  if diff -q $file $MOUNT/$basename; then
+    ln -sf $MOUNT/$basename $file
+  else
+    # Verification failed, clean up
+    rm {$TEMP,$USB,$LOCAL}/$basename.???
+    rmdir $TEMP
+
+    error 'Unable to confirm shared file, aborting'
+  fi
+
+  # Move remaining shares to $STORE
+  mkcleandir $STORE $basename
+  mv $TEMP/$basename.??? $STORE
+  rmdir $TEMP
+
+  echo "$file is now stored on the USB key"
+  echo "Remaining shares are found in $STORE"
+}
+
+function copy_file {
+  file=$1
+  basename=$(basename $file)
+
+  check_things
+
+  if exists $USB $basename; then
+    true
+  else
+    error "$basename is not stored on the USB key";
+  fi
+
+  # Check if file is already from key
+  if exists $LOCAL $basename; then
+    error "Your copy of $file is already stored on the USB key"
+  fi
+
+  # Check that files are left
+  if exists $STORE $basename; then
+    # Move one share from $STORE to $LOCAL
+    mkcleandir $LOCAL $basename
+    mvsingle $STORE $LOCAL $basename
+
+    make_symlinks $basename
+
+    ln -s $MOUNT/$basename $file
+
+    echo "$basename shared from USB key to $file"
+  else
+    echo "There are no more shares of $basename left to copy to this computer"
+    echo "You will have to re-split the file with more copies and distribute"
+    echo "the new files to all your clients."
+  fi
+}
+
+function merge_file {
+  file=$1
+  basename=$(basename $file)
+
+  check_things
+
+  if test -n "$(find $USB -maxdepth 1 -name "$basename.???" -print -quit)"; then
+    if gfcombine $LOCAL/$basename.???; then
+      mv $LOCAL/$basename $file
+      rm -f {$STORE,$USB,$LOCAL}/$basename.???
+      echo "$basename removed from USB key and put at $file"
+    fi
+  else
+    error "$basename does not exist on the key"
+  fi
+}
+
+function list_files {
+  check_things
+
+  find $USB -type f | sed 's:.*/::;s:\.[0-9]\{3\}::' |sort |uniq
+}
+
+function require {
+  local value=$1
+
+  if [ -z "$value" ]; then
+    usage
+  fi
+  echo $value
+}
+
+function unmount_key {
+  mount=$(df -P $USB | awk 'NR==2 { print $6 }')
+
+  if hash udevil 2>/dev/null; then
+    udevil umount $mount
+  elif hash sudo 2>/dev/null; then
+    sudo umount $mount
+  else
+    umount $mount
+  fi
+
+  echo "USB key unmounted"
+}
+
+if [ ! -f /etc/gfk.conf ]; then
+  error 'No configuration file found'
+fi
+
+command=$(require $1)
+
+case $command in
+  add)
+    split_file $(require $2)
+    ;;
+
+  grab)
+    copy_file  $(require $2)
+    ;;
+
+  rm)
+    merge_file $(require $2)
+    ;;
+
+  ls)
+    list_files
+    ;;
+
+  eject)
+    unmount_key
+    ;;
+
+  setup)
+    setup
+    ;;
+
+  *)
+    usage
+    ;;
+esac
