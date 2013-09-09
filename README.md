@@ -48,30 +48,33 @@ setting bash variables.  The following variables are defined:
 
 ### TEMP
 
-Temporary location when generating shares.  This should be a ram disk.
+Temporary location when generating shares.  This should be a ram disk for best
+security.
 
 ### USB
 
-Where to put the files on the USB drive.  I recommend using a directory on the
-drive rather than the root but it doesn't make much difference.  It doesn't even
-really have to be a removable media but then what's the point.  You could point
-this into your Dropbox or something if you wanted.
+Directory for file shares stored on the USB key.  This should usually be on a
+removable media such as a USB drive.
 
 ### LOCAL
 
-Where to store the local shares.  It should probably be in your home directory.
+Directory for file shares stored locally and symlinks to files stored on the USB
+key.  This should not be readable by other users as it will contain sufficient
+data to reconstruct your files when the USB symlinks are active.
 
 ### MOUNT
 
-Where to mount the secretfs.  This is where your files will magically show up if
-the USB key is mounted correctly.  It should probably be in your home directory.
+Directory for mounting secretfs.  This is where your reconstructed files will
+appear when they USB symlinks are active.  As such, it should not be readable by
+other users although the default for secretfs is to give the files 0400
+permissions.
 
 ### STORE
 
-Where to store the unused shares.  My best suggestion at this time is to use
-Dropbox or [sshfs][] or something else that you can share between all your
-clients.  Keep in mind that you will need to be able to access this to add new
-clients since that's where the unclaimed shares are kept.
+Directory for storing unused shares.  This is the weakest point of the system as
+it can potentially store enough data to reconstruct the files without any other
+point of access.  As such, it is recommended to use something secure to store
+these and that the shares are distributed quickly to your other computers.
 
 ## Usage
 
